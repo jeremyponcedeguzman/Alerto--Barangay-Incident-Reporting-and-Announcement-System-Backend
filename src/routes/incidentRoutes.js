@@ -3,27 +3,30 @@ import {
   reportIncident,
   getIncidents,
   getIncidentById,
+  updateIncident,
   updateIncidentStatus,
   deleteIncident,
   getIncidentStats,
 } from '../controllers/incidentController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
+import { upload } from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
-// Public route: citizens/residents can report incidents without login
-router.post('/', reportIncident);
+// Public routes: incident reporting with live photo & map view
+router.post('/', upload.single('image'), reportIncident);
+router.get('/', getIncidents);
+router.get('/stats/overview', getIncidentStats);
+router.get('/:id', getIncidentById);
 
-// Protected routes: officials view, manage, and update response
-router.get('/', protect, getIncidents);
-router.get('/stats/overview', protect, getIncidentStats);
-router.get('/:id', protect, getIncidentById);
+// Protected routes: officials update and manage incidents
+router.patch('/:id', protect, authorize('Admin', 'admin', 'Barangay Official', 'official'), updateIncident);
 router.patch(
   '/:id/status',
   protect,
-  authorize('Admin', 'Barangay Official'),
+  authorize('Admin', 'admin', 'Barangay Official', 'official'),
   updateIncidentStatus
 );
-router.delete('/:id', protect, authorize('Admin'), deleteIncident);
+router.delete('/:id', protect, authorize('Admin', 'admin'), deleteIncident);
 
 export default router;

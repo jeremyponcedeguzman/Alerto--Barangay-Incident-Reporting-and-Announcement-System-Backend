@@ -3,12 +3,14 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import morgan from 'morgan';
 import { connectDB } from './config/db.js';
+import { isCloudinaryConfigured } from './config/cloudinary.js';
 
 // Route imports
 import authRoutes from './routes/authRoutes.js';
 import alertRoutes from './routes/alertRoutes.js';
 import incidentRoutes from './routes/incidentRoutes.js';
 import residentRoutes from './routes/residentRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 
 // Middleware imports
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
@@ -41,9 +43,9 @@ app.use(
   })
 );
 
-// Body parser
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Body parser (50MB limit to support base64 camera photos)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // HTTP logger
 if (process.env.NODE_ENV !== 'production') {
@@ -55,6 +57,7 @@ app.get('/', (req, res) => {
   res.status(200).json({
     message: 'Barangay Emergency Notification System API is running',
     version: '1.0.0',
+    cloudinaryEnabled: isCloudinaryConfigured(),
     documentation: '/api/health',
   });
 });
@@ -64,6 +67,7 @@ app.get('/api/health', (req, res) => {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+    cloudinaryConfigured: isCloudinaryConfigured(),
   });
 });
 
@@ -72,6 +76,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/residents', residentRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Error handling middleware
 app.use(notFound);
@@ -82,4 +87,9 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
   console.log(`🌐 Base API URL: http://localhost:${PORT}`);
+  if (isCloudinaryConfigured()) {
+    console.log(`☁️  Cloudinary: Connected successfully (Cloud: ${process.env.CLOUDINARY_CLOUD_NAME || 'oaxdxwvz'})`);
+  } else {
+    console.log('⚠️  Cloudinary: Not configured in .env');
+  }
 });
