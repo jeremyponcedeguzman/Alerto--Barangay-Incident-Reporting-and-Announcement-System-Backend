@@ -12,6 +12,8 @@ import alertRoutes from './routes/alertRoutes.js';
 import incidentRoutes from './routes/incidentRoutes.js';
 import residentRoutes from './routes/residentRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import staffRoutes from './routes/staffRoutes.js';
+import auditLogRoutes from './routes/auditLogRoutes.js';
 
 // Middleware imports
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
@@ -80,6 +82,8 @@ app.use('/api/alerts', alertRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/residents', residentRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/staff', staffRoutes);
+app.use('/api/audit-logs', auditLogRoutes);
 
 // Error handling middleware
 app.use(notFound);

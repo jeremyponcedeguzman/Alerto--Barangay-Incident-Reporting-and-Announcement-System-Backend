@@ -44,6 +44,29 @@ const residentSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    verificationStatus: {
+      type: String,
+      enum: ['approved', 'pending', 'rejected'],
+      default: 'approved',
+    },
+    rejectionReason: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    email: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    role: {
+      type: String,
+      default: 'resident',
+    },
+    proofOfResidencyName: {
+      type: String,
+      default: '',
+    },
   },
   {
     timestamps: true,

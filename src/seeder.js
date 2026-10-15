@@ -4,6 +4,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import Incident from './models/Incident.js';
 import Alert from './models/Alert.js';
+import Staff from './models/Staff.js';
+import AuditLog from './models/AuditLog.js';
+import Resident from './models/Resident.js';
 
 // Setup __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -312,6 +315,102 @@ const EXAMPLE_ALERTS = [
   },
 ];
 
+const INITIAL_STAFF = [
+  { customId: "1", name: "Hon. Roberto Santos", role: "Barangay Captain", category: "Official", isDuty: true, shift: "Day (8:00 AM - 5:00 PM)", contact: "0917-111-2222", badge: "BRGY-CPT-01" },
+  { customId: "2", name: "Hon. Maria Clara", role: "Kagawad - Health & Peace", category: "Official", isDuty: true, shift: "Day (8:00 AM - 5:00 PM)", contact: "0918-222-3333", badge: "BRGY-KAG-02" },
+  { customId: "3", name: "Juan Dela Cruz", role: "Chief Tanod", category: "Tanod", isDuty: true, shift: "Night (8:00 PM - 8:00 AM)", contact: "0919-333-4444", badge: "TND-CHIEF-01" },
+  { customId: "4", name: "Pedro Penduko", role: "Barangay Tanod", category: "Tanod", isDuty: false, shift: "Off Duty (Rotating)", contact: "0920-444-5555", badge: "TND-004" },
+  { customId: "5", name: "Ana Reyes", role: "Barangay Medic / BHERT", category: "Medic", isDuty: true, shift: "Night (8:00 PM - 8:00 AM)", contact: "0921-555-6666", badge: "MED-005" },
+  { customId: "6", name: "Carlos Agoncillo", role: "Barangay Tanod", category: "Tanod", isDuty: true, shift: "Day (8:00 AM - 8:00 PM)", contact: "0922-777-8888", badge: "TND-006" },
+];
+
+const INITIAL_AUDIT_LOGS = [
+  {
+    customId: "LOG-2026-001",
+    category: "Incident Dispatch",
+    action: "Incident Dispatched",
+    actor: "Operations Desk",
+    target: "INC-2026-001 (Residential Structure Fire)",
+    details: "Dispatched BFP Firefighters Unit 1 to Kamagong St. cor. Bagtikan St.",
+    severity: "critical",
+  },
+  {
+    customId: "LOG-2026-002",
+    category: "Broadcast Alert",
+    action: "Emergency Broadcast Published",
+    actor: "Admin Officer",
+    target: "ANN-001 (Rainfall Warning)",
+    details: "Published urgent advisory regarding lowland drainage clearing operation.",
+    severity: "warning",
+  },
+  {
+    customId: "LOG-2026-003",
+    category: "Resident Verification",
+    action: "Resident Approved",
+    actor: "Barangay Official",
+    target: "RES-DEMO-01 (Juan Dela Cruz)",
+    details: "Government ID and Barangay Residency Certificate validated.",
+    severity: "notice",
+  },
+  {
+    customId: "LOG-2026-004",
+    category: "Staff Management",
+    action: "Shift Assigned",
+    actor: "Chief Tanod",
+    target: "Juan Dela Cruz (Chief Tanod)",
+    details: "Assigned to Night Shift (8:00 PM - 8:00 AM) Patrol Sector A.",
+    severity: "info",
+  },
+  {
+    customId: "LOG-2026-005",
+    category: "Incident Dispatch",
+    action: "Incident Status Updated",
+    actor: "BHERT Medic",
+    target: "INC-2026-009 (Motorcycle Fall Injury)",
+    details: "Status marked as 'Resolved' after on-site first aid administration.",
+    severity: "info",
+  },
+  {
+    customId: "LOG-2026-006",
+    category: "Security & Auth",
+    action: "Admin Portal Authentication",
+    actor: "Admin Officer",
+    target: "Official Desk Login",
+    details: "Authenticated via secure official portal credentials.",
+    severity: "info",
+  },
+  {
+    customId: "LOG-2026-007",
+    category: "Resident Verification",
+    action: "Residency Application Rejected",
+    actor: "Barangay Official",
+    target: "RES-9821 (Mark Cruz)",
+    details: "Proof of residency was illegible or outside Barangay jurisdiction.",
+    severity: "warning",
+  },
+];
+
+const INITIAL_RESIDENTS = [
+  {
+    fullName: "Juan Dela Cruz",
+    email: "resident@gmail.com",
+    contactNumber: "09171234567",
+    purok: "Sitio Centro",
+    address: "Sitio Centro, Barangay Anupul, Bamban, Tarlac",
+    verificationStatus: "approved",
+    role: "resident",
+  },
+  {
+    fullName: "Maria Santos",
+    email: "maria.santos@gmail.com",
+    contactNumber: "0918-222-3333",
+    purok: "Sitio Mape",
+    address: "Sitio Mape, Barangay Anupul, Bamban, Tarlac",
+    verificationStatus: "pending",
+    role: "resident",
+  },
+];
+
 export async function seedInitialData({ isCli = false } = {}) {
   const mongoUri = process.env.MONGO_URI;
   if (!mongoUri && isCli) {
@@ -360,6 +459,30 @@ export async function seedInitialData({ isCli = false } = {}) {
       console.log('Seeding example emergency alerts/advisories...');
       await Alert.insertMany(EXAMPLE_ALERTS);
       console.log('✅ Successfully seeded example alerts into MongoDB!');
+    }
+
+    // 4. Seed initial staff roster if empty
+    const staffCount = await Staff.countDocuments();
+    if (staffCount === 0) {
+      console.log('Seeding initial staff roster...');
+      await Staff.insertMany(INITIAL_STAFF);
+      console.log('✅ Successfully seeded staff roster into MongoDB!');
+    }
+
+    // 5. Seed initial audit logs if empty
+    const auditCount = await AuditLog.countDocuments();
+    if (auditCount === 0) {
+      console.log('Seeding initial audit logs...');
+      await AuditLog.insertMany(INITIAL_AUDIT_LOGS);
+      console.log('✅ Successfully seeded audit logs into MongoDB!');
+    }
+
+    // 6. Seed initial residents if empty
+    const residentCount = await Resident.countDocuments();
+    if (residentCount === 0) {
+      console.log('Seeding initial residents...');
+      await Resident.insertMany(INITIAL_RESIDENTS);
+      console.log('✅ Successfully seeded residents into MongoDB!');
     }
 
     const totalCount = await Incident.countDocuments();
