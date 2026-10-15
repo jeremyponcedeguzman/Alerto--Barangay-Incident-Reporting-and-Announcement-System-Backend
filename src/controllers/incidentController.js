@@ -64,8 +64,8 @@ export const reportIncident = async (req, res, next) => {
       locationName: finalLocation,
       purok: purok || finalLocation,
       exactLocation: exactLocation || finalLocation,
-      lat: lat ? Number(lat) : 14.5605,
-      lng: lng ? Number(lng) : 121.0182,
+      lat: lat ? Number(lat) : 15.2894,
+      lng: lng ? Number(lng) : 120.5718,
       description,
       reportedBy: finalReporter,
       reporterName: finalReporter,
@@ -151,12 +151,28 @@ export const getIncidentById = async (req, res, next) => {
   }
 };
 
-// @desc    Update incident details (status, responder, notes)
+// @desc    Update incident details (status, responder, notes, or incident information)
 // @route   PATCH /api/incidents/:id
-// @access  Private (Officials & Admin)
+// @access  Public / Private
 export const updateIncident = async (req, res, next) => {
   try {
-    const { status, actionTakenNotes, responder, votes } = req.body;
+    const {
+      status,
+      actionTakenNotes,
+      responder,
+      votes,
+      title,
+      category,
+      severity,
+      urgency,
+      locationName,
+      exactLocation,
+      purok,
+      lat,
+      lng,
+      description,
+      imageEvidence,
+    } = req.body;
 
     const isObjectId = req.params.id.match(/^[0-9a-fA-F]{24}$/);
     const incident = await Incident.findOne({
@@ -170,17 +186,28 @@ export const updateIncident = async (req, res, next) => {
       });
     }
 
-    if (status) incident.status = status;
-    if (responder) incident.responder = responder;
+    if (status !== undefined) incident.status = status;
+    if (responder !== undefined) incident.responder = responder;
     if (votes !== undefined) incident.votes = votes;
     if (actionTakenNotes !== undefined) incident.actionTakenNotes = actionTakenNotes;
+    if (title !== undefined) incident.title = title;
+    if (category !== undefined) incident.category = category;
+    if (severity !== undefined) incident.severity = severity;
+    if (urgency !== undefined) incident.urgency = urgency;
+    if (locationName !== undefined) incident.locationName = locationName;
+    if (exactLocation !== undefined) incident.exactLocation = exactLocation;
+    if (purok !== undefined) incident.purok = purok;
+    if (lat !== undefined) incident.lat = Number(lat);
+    if (lng !== undefined) incident.lng = Number(lng);
+    if (description !== undefined) incident.description = description;
+    if (imageEvidence !== undefined) incident.imageEvidence = imageEvidence;
     if (req.user) incident.respondedBy = req.user._id;
 
     await incident.save();
 
     res.status(200).json({
       success: true,
-      message: 'Incident status updated successfully',
+      message: 'Incident updated successfully',
       data: incident,
     });
   } catch (error) {

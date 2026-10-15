@@ -55,11 +55,11 @@ const incidentSchema = new mongoose.Schema(
     },
     lat: {
       type: Number,
-      default: 14.5605,
+      default: 15.2894,
     },
     lng: {
       type: Number,
-      default: 121.0182,
+      default: 120.5718,
     },
     description: {
       type: String,
