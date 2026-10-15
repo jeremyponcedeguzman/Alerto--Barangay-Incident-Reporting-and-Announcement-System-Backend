@@ -312,27 +312,26 @@ const EXAMPLE_ALERTS = [
   },
 ];
 
-async function seed() {
+export async function seedInitialData({ isCli = false } = {}) {
   const mongoUri = process.env.MONGO_URI;
-  if (!mongoUri) {
+  if (!mongoUri && isCli) {
     console.error('❌ MONGO_URI is missing from .env');
     process.exit(1);
   }
 
   try {
-    console.log('Connecting to MongoDB Atlas...');
-    await mongoose.connect(mongoUri);
-    console.log('✅ Connected to MongoDB Atlas.');
+    if (isCli && mongoose.connection.readyState !== 1) {
+      console.log('Connecting to MongoDB Atlas...');
+      await mongoose.connect(mongoUri);
+      console.log('✅ Connected to MongoDB Atlas.');
+    }
 
     // 1. Check for any existing customId collisions with user-created reports
     const existingIncidents = await Incident.find({});
-    console.log(`Found ${existingIncidents.length} existing incident(s) in database.`);
-
     const exampleIds = new Set(EXAMPLE_INCIDENTS.map((i) => i.customId));
     let nextAvailableSuffix = 13;
 
     for (const inc of existingIncidents) {
-      // If an existing record has INC-2026-001 or INC-2026-002 but is NOT the example title
       const isExample = EXAMPLE_INCIDENTS.some(
         (ex) => ex.customId === inc.customId && ex.title === inc.title
       );
@@ -350,7 +349,7 @@ async function seed() {
       await Incident.findOneAndUpdate(
         { customId: incidentData.customId },
         { $set: incidentData },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
+        { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
       );
     }
     console.log('✅ Successfully seeded example incidents into MongoDB!');
@@ -361,21 +360,28 @@ async function seed() {
       console.log('Seeding example emergency alerts/advisories...');
       await Alert.insertMany(EXAMPLE_ALERTS);
       console.log('✅ Successfully seeded example alerts into MongoDB!');
-    } else {
-      console.log(`Alerts collection already contains ${alertCount} document(s).`);
     }
 
     const totalCount = await Incident.countDocuments();
     console.log(`📊 Total incidents now in MongoDB: ${totalCount}`);
 
-    await mongoose.disconnect();
-    console.log('🔌 Disconnected from MongoDB. Seeding complete!');
-    process.exit(0);
+    if (isCli) {
+      await mongoose.disconnect();
+      console.log('🔌 Disconnected from MongoDB. Seeding complete!');
+      process.exit(0);
+    }
   } catch (error) {
     console.error('❌ Error during database seeding:', error);
-    await mongoose.disconnect();
-    process.exit(1);
+    if (isCli) {
+      await mongoose.disconnect();
+      process.exit(1);
+    }
+    throw error;
   }
 }
 
-seed();
+// Auto-run if executed directly via node src/seeder.js
+const isDirectExecution = process.argv[1] && process.argv[1].replace(/\\/g, '/').endsWith('src/seeder.js');
+if (isDirectExecution) {
+  seedInitialData({ isCli: true });
+}
