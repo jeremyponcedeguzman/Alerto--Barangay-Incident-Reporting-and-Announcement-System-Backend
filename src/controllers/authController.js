@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import Resident from '../models/Resident.js';
 
 // Helper to generate JWT
 const generateToken = (id) => {
@@ -14,12 +15,21 @@ const generateToken = (id) => {
 export const register = async (req, res, next) => {
   try {
     const { fullName, email, password, role, position, contactNumber } = req.body;
+    const cleanEmail = (email || '').trim().toLowerCase();
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: cleanEmail });
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'A user with this email address already exists',
+        message: 'A user account with this email address already exists',
+      });
+    }
+
+    const existingResident = await Resident.findOne({ email: cleanEmail });
+    if (existingResident) {
+      return res.status(400).json({
+        success: false,
+        message: 'A resident account is already registered with this email address',
       });
     }
 
@@ -29,7 +39,7 @@ export const register = async (req, res, next) => {
 
     const user = await User.create({
       fullName,
-      email,
+      email: cleanEmail,
       password,
       role: assignedRole,
       position: position || (assignedRole === 'Admin' ? 'Barangay Captain' : 'Barangay Staff'),

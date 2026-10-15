@@ -1,4 +1,5 @@
 import Resident from '../models/Resident.js';
+import User from '../models/User.js';
 
 // @desc    Get all residents (with filter and search)
 // @route   GET /api/residents
@@ -59,6 +60,29 @@ export const getResidentById = async (req, res, next) => {
 // @access  Private
 export const addResident = async (req, res, next) => {
   try {
+    const { email } = req.body;
+    if (email && typeof email === 'string' && email.trim()) {
+      const cleanEmail = email.trim().toLowerCase();
+      
+      const existingResident = await Resident.findOne({ email: cleanEmail });
+      if (existingResident) {
+        return res.status(400).json({
+          success: false,
+          message: 'An account with this email address already exists in the resident directory.',
+        });
+      }
+
+      const existingOfficial = await User.findOne({ email: cleanEmail });
+      if (existingOfficial) {
+        return res.status(400).json({
+          success: false,
+          message: 'An official account with this email address already exists.',
+        });
+      }
+
+      req.body.email = cleanEmail;
+    }
+
     const resident = await Resident.create(req.body);
 
     res.status(201).json({
@@ -67,6 +91,12 @@ export const addResident = async (req, res, next) => {
       data: resident,
     });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'An account with this email address already exists.',
+      });
+    }
     next(error);
   }
 };
@@ -76,6 +106,32 @@ export const addResident = async (req, res, next) => {
 // @access  Private
 export const updateResident = async (req, res, next) => {
   try {
+    const { email } = req.body;
+    if (email && typeof email === 'string' && email.trim()) {
+      const cleanEmail = email.trim().toLowerCase();
+
+      const duplicateResident = await Resident.findOne({
+        email: cleanEmail,
+        _id: { $ne: req.params.id },
+      });
+      if (duplicateResident) {
+        return res.status(400).json({
+          success: false,
+          message: 'Another resident account is already registered with this email address.',
+        });
+      }
+
+      const duplicateOfficial = await User.findOne({ email: cleanEmail });
+      if (duplicateOfficial) {
+        return res.status(400).json({
+          success: false,
+          message: 'An official account is already registered with this email address.',
+        });
+      }
+
+      req.body.email = cleanEmail;
+    }
+
     const resident = await Resident.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
@@ -94,6 +150,12 @@ export const updateResident = async (req, res, next) => {
       data: resident,
     });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'An account with this email address already exists.',
+      });
+    }
     next(error);
   }
 };
