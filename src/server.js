@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -63,8 +64,10 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'healthy',
+  const isMongoConnected = mongoose.connection.readyState === 1;
+  res.status(isMongoConnected ? 200 : 503).json({
+    status: isMongoConnected ? 'healthy' : 'degraded',
+    mongoConnected: isMongoConnected,
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     cloudinaryConfigured: isCloudinaryConfigured(),
