@@ -67,6 +67,10 @@ const residentSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    proofOfResidencyUrl: {
+      type: String,
+      default: '',
+    },
   },
   {
     timestamps: true,
